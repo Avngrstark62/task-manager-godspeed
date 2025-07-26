@@ -1,0 +1,99 @@
+{
+  "project": {
+    "name": "task-manager",
+    "framework": "godspeed",
+    "testFramework": "jest",
+    "lastActivity": "2025-07-25T09:52:15.000Z"
+  },
+  "testProgress": {
+    "unit": {
+      "not_started": [
+        "src/functions/my_bank_api/auth_workflow.ts",
+        "src/functions/task/delete.ts",
+        "src/functions/task/getAll.ts",
+        "src/functions/task/getById.ts",
+        "src/functions/task/update.ts",
+        "src/functions/user/create.ts",
+        "src/functions/user/delete.ts",
+        "src/functions/user/getAll.ts",
+        "src/functions/user/getById.ts",
+        "src/functions/user/update.ts",
+        "src/functions/validations/request/standardResponse.ts",
+        "src/functions/validations/response/standardResponse.ts"
+      ],
+      "pending": [],
+      "completed": [
+        "src/functions/task/create.ts"
+      ],
+      "need_improvement": []
+    },
+    "functional": {
+      "not_started": [
+        {
+          "method": "delete",
+          "path": "/tasks/{taskId}/{userId}"
+        },
+        {
+          "method": "get",
+          "path": "/tasks/{taskId}/{userId}"
+        },
+        {
+          "method": "put",
+          "path": "/tasks/{taskId}/{userId}"
+        },
+        {
+          "method": "get",
+          "path": "/tasks/{userId}"
+        },
+        {
+          "method": "post",
+          "path": "/users"
+        },
+        {
+          "method": "get",
+          "path": "/users"
+        },
+        {
+          "method": "delete",
+          "path": "/users/{id}"
+        },
+        {
+          "method": "get",
+          "path": "/users/{id}"
+        },
+        {
+          "method": "put",
+          "path": "/users/{id}"
+        }
+      ],
+      "pending": [],
+      "completed": [
+        {
+          "method": "post",
+          "path": "/tasks"
+        }
+      ],
+      "need_improvement": []
+    },
+    "integration": {
+      "not_started": [
+        {
+          "name": "Managing Existing Tasks",
+          "description": "An existing user views, updates, and deletes their tasks."
+        },
+        {
+          "name": "Retrieving Specific Task Details",
+          "description": "A user retrieves the details of a specific task."
+        }
+      ],
+      "pending": [],
+      "completed": [
+        {
+          "name": "New User Onboarding & First Task Creation",
+          "description": "A new user registers and creates their first task."
+        }
+      ],
+      "need_improvement": []
+    }
+  }
+}

@@ -1,0 +1,46 @@
+http.get./tasks/:userId:
+  fn: task.getAll
+  summary: Get all tasks
+  params:
+    - name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    200:
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                title:
+                  type: string
+                description:
+                  type: string
+                completed:
+                  type: boolean
+                userId:
+                  type: string
+    404:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    500:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
