@@ -37,11 +37,8 @@
     "prisma-prepare:test:darwin:linux": "dotenv -e .test.env -- godspeed prisma prepare",
     "prisma-prepare:test:default": "dotenv -e .test.env -- godspeed prisma prepare",
     "test:unit": "jest --config=jest.unit.config.js",
-    "test:unit:cov": "jest --config=jest.unit.config.js --coverage",
     "test:functional": "jest --config=jest.functional.config.js",
-    "test:functional:cov": "jest --config=jest.functional.config.js --coverage",
-    "test:integration": "jest --config=jest.integration.config.js",
-    "test:integration:cov": "jest --config=jest.integration.config.js --coverage"
+    "test:integration": "jest --config=jest.integration.config.js"
   },
   "author": "",
   "license": "ISC",

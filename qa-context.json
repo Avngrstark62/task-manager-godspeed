@@ -3,7 +3,7 @@
     "name": "task-manager",
     "framework": "godspeed",
     "testFramework": "jest",
-    "lastActivity": "2025-07-25T09:52:15.000Z"
+    "lastActivity": "2025-07-26T10:02:52.000Z"
   },
   "testProgress": {
     "unit": {
@@ -21,78 +21,37 @@
         "src/functions/validations/request/standardResponse.ts",
         "src/functions/validations/response/standardResponse.ts"
       ],
-      "pending": [],
-      "completed": [
+      "pending": [
         "src/functions/task/create.ts"
       ],
+      "completed": [],
       "need_improvement": []
     },
     "functional": {
       "not_started": [
-        {
-          "method": "delete",
-          "path": "/tasks/{taskId}/{userId}"
-        },
-        {
-          "method": "get",
-          "path": "/tasks/{taskId}/{userId}"
-        },
-        {
-          "method": "put",
-          "path": "/tasks/{taskId}/{userId}"
-        },
-        {
-          "method": "get",
-          "path": "/tasks/{userId}"
-        },
-        {
-          "method": "post",
-          "path": "/users"
-        },
-        {
-          "method": "get",
-          "path": "/users"
-        },
-        {
-          "method": "delete",
-          "path": "/users/{id}"
-        },
-        {
-          "method": "get",
-          "path": "/users/{id}"
-        },
-        {
-          "method": "put",
-          "path": "/users/{id}"
-        }
+        { "method": "post", "path": "/tasks" },
+        { "method": "delete", "path": "/tasks/{taskId}/{userId}" },
+        { "method": "get", "path": "/tasks/{taskId}/{userId}" },
+        { "method": "put", "path": "/tasks/{taskId}/{userId}" },
+        { "method": "get", "path": "/tasks/{userId}" },
+        { "method": "post", "path": "/users" },
+        { "method": "get", "path": "/users" },
+        { "method": "delete", "path": "/users/{id}" },
+        { "method": "get", "path": "/users/{id}" },
+        { "method": "put", "path": "/users/{id}" }
       ],
       "pending": [],
-      "completed": [
-        {
-          "method": "post",
-          "path": "/tasks"
-        }
-      ],
+      "completed": [],
       "need_improvement": []
     },
     "integration": {
       "not_started": [
-        {
-          "name": "Managing Existing Tasks",
-          "description": "An existing user views, updates, and deletes their tasks."
-        },
-        {
-          "name": "Retrieving Specific Task Details",
-          "description": "A user retrieves the details of a specific task."
-        }
+        { "name": "New User Onboarding & First Task Creation", "description": "A new user registers, and creates their first task." },
+        { "name": "Managing Existing Tasks", "description": "An existing user views, updates, and deletes their tasks." },
+        { "name": "Retrieving Specific Task Details", "description": "An existing user retrieves the details of a specific task." }
       ],
       "pending": [],
-      "completed": [
-        {
-          "name": "New User Onboarding & First Task Creation",
-          "description": "A new user registers and creates their first task."
-        }
-      ],
+      "completed": [],
       "need_improvement": []
     }
   }

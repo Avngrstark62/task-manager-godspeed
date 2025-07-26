@@ -6,5 +6,5 @@ module.exports = {
       diagnostics: false,
     },
   },
-  testMatch: ['<rootDir>/test/integration/**/*.test.ts'],
+  testMatch: ['<rootDir>/test/functional/**/*.test.ts'],
 };

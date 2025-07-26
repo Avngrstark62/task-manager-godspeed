@@ -1,338 +1,202 @@
-import { GSContext, GSStatus } from '@godspeedsystems/core';
-import createTask from '../../../src/functions/task/create';
+import { GSContext, GSStatus, GSCloudEvent, Logger } from '@godspeedsystems/core';
+import create from '../../../src/functions/task/create';
 
-// Mock the datasources
-const mockDatasources = {
-  schema: {
-    client: {
-      user: {
-        findUnique: jest.fn(),
-      },
-      task: {
-        create: jest.fn(),
-      },
+// Mock the Prisma client
+const mockPrisma = {
+  client: {
+    user: {
+      findUnique: jest.fn(),
+    },
+    task: {
+      create: jest.fn(),
     },
   },
 };
 
-// Mock the logger
-const mockLogger = {
+// Fully mock the logger
+const mockLogger: Logger = {
   error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+  fatal: jest.fn(),
+  child: jest.fn().mockReturnThis(),
 };
+
+// Helper to create a base mock context
+const createMockCtx = (body: Record<string, any>): GSContext => ({
+  inputs: {
+    data: { body },
+    // Fulfilling GSCloudEvent properties
+    id: 'test-id',
+    specversion: '1.0',
+    type: 'test-type',
+    source: 'test-source',
+    subject: 'test-subject',
+    time: new Date().toISOString(),
+    datacontenttype: 'application/json',
+    dataschema: 'test-schema',
+  } as GSCloudEvent,
+  datasources: {
+    schema: mockPrisma,
+  },
+  logger: mockLogger,
+});
+
 
 // Reset mocks before each test
 beforeEach(() => {
   jest.clearAllMocks();
 });
 
-describe('createTask', () => {
-  // Test Case 1.1: Happy Path - Successful Task Creation
-  it('should create and return a new task with status 201 when a valid user ID is provided', async () => {
-    // This is the request body that will be used in the test
+describe('create task function', () => {
+  // Test Case 1.1: should create a new task successfully when provided with valid data
+  it('should create a new task successfully when provided with valid data', async () => {
+    // Setup: Define a mock GSContext object
     const mockBody = {
       title: 'New Task',
-      description: 'Task description',
-      userId: 'valid-user-id',
+      description: 'Task Description',
+      userId: 'user-123',
     };
+    const mockCtx = createMockCtx(mockBody);
 
-    // This is the mock context that will be passed to the function
-    const mockCtx = {
-      inputs: {
-        data: {
-          body: mockBody,
-        },
-      },
-      datasources: mockDatasources,
-      logger: mockLogger,
-    } as unknown as GSContext;
+    const user = { id: 'user-123', name: 'Test User' };
+    const task = { id: 'task-123', ...mockBody };
 
-    // This is the user that will be returned by the findUnique method
-    const mockUser = {
-      id: 'valid-user-id',
-      name: 'Test User',
-      email: 'test@example.com',
-    };
+    // Mock prisma calls
+    mockPrisma.client.user.findUnique.mockResolvedValue(user);
+    mockPrisma.client.task.create.mockResolvedValue(task);
 
-    // This is the task that will be returned by the create method
-    const mockTask = {
-      id: 'task-id-1',
-      ...mockBody,
-    };
+    // Steps: Call the create(ctx) function
+    const result = await create(mockCtx);
 
-    // Mock the findUnique method to return the user
-    mockDatasources.schema.client.user.findUnique.mockResolvedValue(mockUser);
-    // Mock the create method to return the task
-    mockDatasources.schema.client.task.create.mockResolvedValue(mockTask);
-
-    // Call the function with the mock context
-    const result = await createTask(mockCtx);
-
-    // Assert that the findUnique method was called with the correct arguments
-    expect(mockDatasources.schema.client.user.findUnique).toHaveBeenCalledWith({
-      where: { id: 'valid-user-id' },
-    });
-
-    // Assert that the create method was called with the correct arguments
-    expect(mockDatasources.schema.client.task.create).toHaveBeenCalledWith({
-      data: mockBody,
-    });
-
-    // Assert that the result is a GSStatus object with success: true and code: 201
+    // Assertions
+    expect(mockPrisma.client.user.findUnique).toHaveBeenCalledWith({ where: { id: 'user-123' } });
+    expect(mockPrisma.client.task.create).toHaveBeenCalledWith({ data: mockBody });
     expect(result).toBeInstanceOf(GSStatus);
-    // Assert that the success property is true
-    expect(result.success).toBe(true);
-    // Assert that the code property is 201
+    expect(result.isSuccess).toBe(true);
     expect(result.code).toBe(201);
-    // Assert that the data property is the mock task
-    expect(result.data).toEqual(mockTask);
+    expect(result.data).toEqual(task);
   });
 
-  // Test Case 2.1: User Not Found
-  it('should return a 404 error if the user ID does not exist', async () => {
-    // This is the request body that will be used in the test
+  // Test Case 2.1: should create a task successfully when only required fields are provided
+  it('should create a task successfully when only required fields are provided', async () => {
+    // Setup: Mock GSContext with only required fields
     const mockBody = {
-      title: 'Task for non-existent user',
-      userId: 'non-existent-user-id',
+      title: 'Required Only Task',
+      userId: 'user-123',
     };
+    const mockCtx = createMockCtx(mockBody);
 
-    // This is the mock context that will be passed to the function
-    const mockCtx = {
-      inputs: {
-        data: {
-          body: mockBody,
-        },
-      },
-      datasources: mockDatasources,
-      logger: mockLogger,
-    } as unknown as GSContext;
+    const user = { id: 'user-123', name: 'Test User' };
+    const task = { id: 'task-456', ...mockBody, description: undefined };
 
-    // Mock the findUnique method to return null
-    mockDatasources.schema.client.user.findUnique.mockResolvedValue(null);
+    mockPrisma.client.user.findUnique.mockResolvedValue(user);
+    mockPrisma.client.task.create.mockResolvedValue(task);
 
-    // Call the function with the mock context
-    const result = await createTask(mockCtx);
+    // Steps: Invoke the create(ctx) function
+    const result = await create(mockCtx);
 
-    // Assert that the findUnique method was called with the correct arguments
-    expect(mockDatasources.schema.client.user.findUnique).toHaveBeenCalledWith({
-      where: { id: 'non-existent-user-id' },
-    });
-
-    // Assert that the create method was not called
-    expect(mockDatasources.schema.client.task.create).not.toHaveBeenCalled();
-
-    // Assert that the result is a GSStatus object with success: false and code: 404
-    expect(result).toBeInstanceOf(GSStatus);
-    // Assert that the success property is false
-    expect(result.success).toBe(false);
-    // Assert that the code property is 404
-    expect(result.code).toBe(404);
-    // Assert that the data property has a message property with the correct value
-    expect(result.data).toHaveProperty('message', 'User not found');
-  });
-
-  // Test Case 2.2: Database Error on User Lookup
-  it('should return a 500 error if checking for user existence fails', async () => {
-    // This is the request body that will be used in the test
-    const mockBody = {
-      title: 'Test Task',
-      userId: 'any-user-id',
-    };
-
-    // This is the mock context that will be passed to the function
-    const mockCtx = {
-      inputs: {
-        data: {
-          body: mockBody,
-        },
-      },
-      datasources: mockDatasources,
-      logger: mockLogger,
-    } as unknown as GSContext;
-
-    // This is the error that will be thrown by the findUnique method
-    const dbError = new Error('Database connection failed');
-    // Mock the findUnique method to throw an error
-    mockDatasources.schema.client.user.findUnique.mockRejectedValue(dbError);
-
-    // Call the function with the mock context
-    const result = await createTask(mockCtx);
-
-    // Assert that the findUnique method was called with the correct arguments
-    expect(mockDatasources.schema.client.user.findUnique).toHaveBeenCalledWith({
-      where: { id: 'any-user-id' },
-    });
-
-    // Assert that the logger's error method was called with the correct arguments
-    expect(mockLogger.error).toHaveBeenCalledWith('Error creating task:', dbError);
-
-    // Assert that the result is a GSStatus object with success: false and code: 500
-    expect(result).toBeInstanceOf(GSStatus);
-    // Assert that the success property is false
-    expect(result.success).toBe(false);
-    // Assert that the code property is 500
-    expect(result.code).toBe(500);
-    // Assert that the data property has a message property with the correct value
-    expect(result.data).toHaveProperty('message', 'An error occurred while creating the task');
-  });
-
-  // Test Case 2.3: Database Error on Task Creation
-  it('should return a 500 error if task creation fails in the database', async () => {
-    // This is the request body that will be used in the test
-    const mockBody = {
-      title: 'Test Task',
-      userId: 'valid-user-id',
-    };
-
-    // This is the mock context that will be passed to the function
-    const mockCtx = {
-      inputs: {
-        data: {
-          body: mockBody,
-        },
-      },
-      datasources: mockDatasources,
-      logger: mockLogger,
-    } as unknown as GSContext;
-
-    // This is the user that will be returned by the findUnique method
-    const mockUser = {
-      id: 'valid-user-id',
-      name: 'Test User',
-      email: 'test@example.com',
-    };
-
-    // This is the error that will be thrown by the create method
-    const dbError = new Error('Failed to create task');
-    // Mock the findUnique method to return the user
-    mockDatasources.schema.client.user.findUnique.mockResolvedValue(mockUser);
-    // Mock the create method to throw an error
-    mockDatasources.schema.client.task.create.mockRejectedValue(dbError);
-
-    // Call the function with the mock context
-    const result = await createTask(mockCtx);
-
-    // Assert that the findUnique method was called with the correct arguments
-    expect(mockDatasources.schema.client.user.findUnique).toHaveBeenCalledWith({
-      where: { id: 'valid-user-id' },
-    });
-
-    // Assert that the create method was called with the correct arguments
-    expect(mockDatasources.schema.client.task.create).toHaveBeenCalledWith({
-      data: mockBody,
-    });
-
-    // Assert that the logger's error method was called with the correct arguments
-    expect(mockLogger.error).toHaveBeenCalledWith('Error creating task:', dbError);
-
-    // Assert that the result is a GSStatus object with success: false and code: 500
-    expect(result).toBeInstanceOf(GSStatus);
-    // Assert that the success property is false
-    expect(result.success).toBe(false);
-    // Assert that the code property is 500
-    expect(result.code).toBe(500);
-    // Assert that the data property has a message property with the correct value
-    expect(result.data).toHaveProperty('message', 'An error occurred while creating the task');
-  });
-
-  // Test Case 3.1: Task Creation with Missing Optional Fields
-  it('should successfully create a task when optional description is not provided', async () => {
-    // This is the request body that will be used in the test
-    const mockBody = {
-      title: 'Task without description',
-      userId: 'valid-user-id',
-    };
-
-    // This is the mock context that will be passed to the function
-    const mockCtx = {
-      inputs: {
-        data: {
-          body: mockBody,
-        },
-      },
-      datasources: mockDatasources,
-      logger: mockLogger,
-    } as unknown as GSContext;
-
-    // This is the user that will be returned by the findUnique method
-    const mockUser = {
-      id: 'valid-user-id',
-      name: 'Test User',
-      email: 'test@example.com',
-    };
-
-    // This is the task that will be returned by the create method
-    const mockTask = {
-      id: 'task-id-2',
-      ...mockBody,
-      description: undefined,
-    };
-
-    // Mock the findUnique method to return the user
-    mockDatasources.schema.client.user.findUnique.mockResolvedValue(mockUser);
-    // Mock the create method to return the task
-    mockDatasources.schema.client.task.create.mockResolvedValue(mockTask);
-
-    // Call the function with the mock context
-    const result = await createTask(mockCtx);
-
-    // Assert that the findUnique method was called with the correct arguments
-    expect(mockDatasources.schema.client.user.findUnique).toHaveBeenCalledWith({
-      where: { id: 'valid-user-id' },
-    });
-
-    // Assert that the create method was called with the correct arguments
-    expect(mockDatasources.schema.client.task.create).toHaveBeenCalledWith({
+    // Assertions
+    expect(mockPrisma.client.task.create).toHaveBeenCalledWith({
       data: {
-        title: 'Task without description',
-        userId: 'valid-user-id',
+        ...mockBody,
         description: undefined,
       },
     });
-
-    // Assert that the result is a GSStatus object with success: true and code: 201
-    expect(result).toBeInstanceOf(GSStatus);
-    // Assert that the success property is true
-    expect(result.success).toBe(true);
-    // Assert that the code property is 201
+    expect(result.isSuccess).toBe(true);
     expect(result.code).toBe(201);
-    // Assert that the data property is the mock task
-    expect(result.data).toEqual(mockTask);
+    expect(result.data).toEqual(task);
   });
 
-  // Test Case 3.2: Invalid Input - Empty Title
-  it('should return a 400 error if the title is empty or contains only whitespace', async () => {
-    // This is the request body that will be used in the test
+  // Test Case 2.2: should return a 400 error if the title is an empty string
+  it('should return a 400 error if the title is an empty string', async () => {
+    // Setup: Mock GSContext with an empty title
     const mockBody = {
-      title: ' ',
-      userId: 'valid-user-id',
+      title: '',
+      userId: 'user-123',
     };
+    const mockCtx = createMockCtx(mockBody);
 
-    // This is the mock context that will be passed to the function
-    const mockCtx = {
-      inputs: {
-        data: {
-          body: mockBody,
-        },
-      },
-      datasources: mockDatasources,
-      logger: mockLogger,
-    } as unknown as GSContext;
+    // Steps: Call the create(ctx) function
+    const result = await create(mockCtx);
 
-    // Call the function with the mock context
-    const result = await createTask(mockCtx);
-
-    // Assert that the findUnique method was not called
-    expect(mockDatasources.schema.client.user.findUnique).not.toHaveBeenCalled();
-    // Assert that the create method was not called
-    expect(mockDatasources.schema.client.task.create).not.toHaveBeenCalled();
-
-    // Assert that the result is a GSStatus object with success: false and code: 400
-    expect(result).toBeInstanceOf(GSStatus);
-    // Assert that the success property is false
-    expect(result.success).toBe(false);
-    // Assert that the code property is 400
+    // Assertions
+    expect(mockPrisma.client.user.findUnique).not.toHaveBeenCalled();
+    expect(mockPrisma.client.task.create).not.toHaveBeenCalled();
+    expect(result.isSuccess).toBe(false);
     expect(result.code).toBe(400);
-    // Assert that the data property has a message property with the correct value
-    expect(result.data).toHaveProperty('message', 'Title cannot be empty');
+    expect(result.data.message).toBe('Title cannot be empty');
+  });
+
+  // Test Case 2.3: should return a 400 error if the title consists only of whitespace
+  it('should return a 400 error if the title consists only of whitespace', async () => {
+    // Setup: Mock GSContext with a whitespace title
+    const mockBody = {
+      title: '   ',
+      userId: 'user-123',
+    };
+    const mockCtx = createMockCtx(mockBody);
+
+    // Steps: Invoke the create(ctx) function
+    const result = await create(mockCtx);
+
+    // Assertions
+    expect(mockPrisma.client.user.findUnique).not.toHaveBeenCalled();
+    expect(mockPrisma.client.task.create).not.toHaveBeenCalled();
+    expect(result.isSuccess).toBe(false);
+    expect(result.code).toBe(400);
+    expect(result.data.message).toBe('Title cannot be empty');
+  });
+
+  // Test Case 3.1: should return a 404 error if the user does not exist
+  it('should return a 404 error if the user does not exist', async () => {
+    // Setup: Mock GSContext with a non-existent userId
+    const mockBody = {
+      title: 'Task for non-existent user',
+      userId: 'user-404',
+    };
+    const mockCtx = createMockCtx(mockBody);
+
+    mockPrisma.client.user.findUnique.mockResolvedValue(null);
+
+    // Steps: Call the create(ctx) function
+    const result = await create(mockCtx);
+
+    // Assertions
+    expect(mockPrisma.client.user.findUnique).toHaveBeenCalledWith({ where: { id: 'user-404' } });
+    expect(mockPrisma.client.task.create).not.toHaveBeenCalled();
+    expect(result.isSuccess).toBe(false);
+    expect(result.code).toBe(404);
+    expect(result.data.message).toBe('User not found');
+  });
+
+  // Test Case 3.2: should return a 500 error if the database call to create a task fails
+  it('should return a 500 error if the database call to create a task fails', async () => {
+    // Setup: Mock GSContext with valid data but make prisma.create reject
+    const mockBody = {
+      title: 'DB Fail Task',
+      description: 'This will fail',
+      userId: 'user-123',
+    };
+    const mockCtx = createMockCtx(mockBody);
+
+    const user = { id: 'user-123', name: 'Test User' };
+    const dbError = new Error('DB connection failed');
+
+    mockPrisma.client.user.findUnique.mockResolvedValue(user);
+    mockPrisma.client.task.create.mockRejectedValue(dbError);
+
+    // Steps: Call the create(ctx) function
+    const result = await create(mockCtx);
+
+    // Assertions
+    expect(mockPrisma.client.user.findUnique).toHaveBeenCalled();
+    expect(mockPrisma.client.task.create).toHaveBeenCalled();
+    expect(result.isSuccess).toBe(false);
+    expect(result.code).toBe(500);
+    expect(result.data.message).toBe('An error occurred while creating the task');
+    expect(mockLogger.error).toHaveBeenCalledWith('Error creating task:', dbError);
   });
 });
